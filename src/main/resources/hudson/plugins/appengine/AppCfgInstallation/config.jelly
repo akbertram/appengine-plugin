@@ -1,0 +1,8 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:entry title="AppEngine SDK Name" field="name" help="/plugin/gradle/help-AppCfgInstallation-name.html">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="SDK_HOME" field="home" help="/plugin/gradle/help-AppCfgInstallation-home.html">
+    <f:textbox />
+  </f:entry>
+</j:jelly>
