@@ -8,6 +8,7 @@ import hudson.model.TaskListener;
 import hudson.remoting.Callable;
 import hudson.slaves.NodeSpecific;
 import hudson.tools.*;
+import jenkins.model.Jenkins;
 import org.jenkinsci.remoting.RoleChecker;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -105,13 +106,25 @@ public class AppCfgInstallation extends ToolInstallation
 
         @Override
         public AppCfgInstallation[] getInstallations() {
-            return Hudson.getInstance().getDescriptorByType(AppEngineBuildWrapper.DescriptorImpl.class).getInstallations();
+            return Jenkins.getInstance().getDescriptorByType(AppEngineBuildWrapper.DescriptorImpl.class).getInstallations();
         }
 
         @Override
         public void setInstallations(AppCfgInstallation... installations) {
-            Hudson.getInstance().getDescriptorByType(AppEngineBuildWrapper.DescriptorImpl.class).setInstallations(installations);
+            Jenkins.getInstance().getDescriptorByType(AppEngineBuildWrapper.DescriptorImpl.class).setInstallations(installations);
         }
     }
 
+    
+    public static AppCfgInstallation find(String name) throws AbortException {
+        AppCfgInstallation[] installations = ToolInstallation.all()
+                .get(AppCfgInstallation.DescriptorImpl.class)
+                .getInstallations();
+        for(AppCfgInstallation installation : installations) {
+            if (name == null || installation.getName().equals(name)) {
+                return installation;
+            }
+        }
+        throw new AbortException("There are no AppEngine Java SDKs installed.");
+    }
 }

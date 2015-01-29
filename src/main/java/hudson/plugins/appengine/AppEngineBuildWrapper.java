@@ -3,6 +3,7 @@ package hudson.plugins.appengine;
 import com.google.jenkins.plugins.credentials.domains.RequiresDomain;
 import hudson.CopyOnWrite;
 import hudson.Extension;
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildWrapper;
@@ -48,6 +49,15 @@ public class AppEngineBuildWrapper extends BuildWrapper {
         public String getCredentialsId() {
             return credentialsId;
         }
+    
+    
+        public AppCfg createAppCfg(FilePath workspace, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
+            
+            return new AppCfg(workspace, launcher, listener)
+                    .setSDK(getAppCfg())
+                    ,setCredentialsId(credentialsId);
+        }
+    
     }
 
     @DataBoundConstructor

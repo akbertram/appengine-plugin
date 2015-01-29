@@ -1,5 +1,9 @@
 package hudson.plugins.appengine;
 
+import com.cloudbees.plugins.credentials.Credentials;
+import com.cloudbees.plugins.credentials.CredentialsDescriptor;
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.common.base.Charsets;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
@@ -8,19 +12,30 @@ import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
+import hudson.security.ACL;
+import hudson.slaves.NodeSpecific;
+import hudson.tools.ToolDescriptor;
+import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class AppCfg {
 
+
+    public enum Action {
+        UPDATE;
+    }
+    
     public static final String APPCFG_USER = "jenkins";
+    
     private final TaskListener listener;
-    private final Launcher launcher;
+    private EnvVars env;
     private final FilePath workspace;
 
     
@@ -30,43 +45,30 @@ public class AppCfg {
     private String applicationId;
     private String version;
 
+    private final Launcher launcher;
     private String appCfgPath;
     
-    public AppCfg(FilePath workspace, Launcher launcher, TaskListener listener) {
+    public AppCfg(FilePath workspace, Launcher launcher, TaskListener listener, EnvVars env) {
         this.workspace = workspace;
         this.launcher = launcher;
         this.listener = listener;
+        this.env = env;
     }
 
-    public void tryInitFromBuildWrapper(AbstractBuild build) throws IOException, InterruptedException {
-
-        AppEngineBuildWrapper.Environment appEngineWrapper = findEnvironment(build);
-        if (appEngineWrapper != null) {
-            EnvVars env = build.getEnvironment(listener);
-            AppCfgInstallation tool = appEngineWrapper.getAppCfg()
-                    .forNode(Computer.currentComputer().getNode(), listener)
-                    .forEnvironment(env);
-
-            listener.getLogger().println("SDK Home:" + tool.getHome());
-            
-            setCredentialsId(appEngineWrapper.getCredentialsId());
-            
-            this.appCfgPath = tool.getExecutable(launcher);
-            if (appCfgPath == null) {
-                throw new AbortException("Can't retrieve the AppCfg executable.");
-            }
-        }
+    public void setAppCfgPath(String path) {
+        this.appCfgPath = path;
     }
 
-    private AppEngineBuildWrapper.Environment findEnvironment(AbstractBuild build) {
+    public AppCfg setSDK(AppCfgInstallation appCfg) throws IOException, InterruptedException {
+        AppCfgInstallation tool = appCfg
+                .forNode(Computer.currentComputer().getNode(), listener)
+                .forEnvironment(env);
 
-        for (Environment environment : build.getEnvironments()) {
-            if(environment instanceof AppEngineBuildWrapper.Environment) {
-                return (AppEngineBuildWrapper.Environment) environment;
-            }
-        }
-        throw new IllegalStateException("Cannot find AppEngine environment");
+        appCfgPath = tool.getExecutable(launcher);
+        
+        return this;
     }
+
 
     public void setVersion(String version) {
         this.version = version;
@@ -76,6 +78,7 @@ public class AppCfg {
         this.applicationId = applicationId;
     }
 
+    
     /**
      * Sets the credentials to be used for this update from a Service Account Private Key.
      * @param id the credential's id
@@ -98,6 +101,19 @@ public class AppCfg {
         }
         
         this.credentials = toJson(credentials);
+    }
+    
+    private GoogleRobotCredentials findCredentials(String applicationId) throws AbortException {
+        List<GoogleRobotCredentials> credentials = CredentialsProvider
+                .lookupCredentials(GoogleRobotCredentials.class, (Item) null,
+                        ACL.SYSTEM, Collections.<DomainRequirement>emptyList());
+
+        for(GoogleRobotCredentials credential : credentials) {
+            if(credential.getProjectId().equals(applicationId)) {
+                return credential;
+            }
+        }
+        throw new AbortException(String.format("No service account for project '%s'", applicationId));
     }
 
 
@@ -153,7 +169,7 @@ public class AppCfg {
         }
     }
 
-    public int execute(String action) throws IOException, InterruptedException {
+    public int execute(Action action) throws IOException, InterruptedException {
 
         if(appCfgPath == null) {
             throw new AbortException("AppEngine SDK Tool has not be configured");
@@ -168,7 +184,7 @@ public class AppCfg {
         args.add("--oauth2");
 
         if(applicationId != null) {
-            args.addKeyValuePair("--", "application", applicationId, false);
+            args.addKeyValuePair("--", "application",  applicationId, false);
         }
         if(version != null) {
             args.addKeyValuePair("--", "version", version, false);
@@ -198,7 +214,7 @@ public class AppCfg {
         }
     }
 
-    public void execute(AbstractBuild build, String action) throws IOException, InterruptedException {
+    public void execute(AbstractBuild build, Action action) throws IOException, InterruptedException {
         int resultCode = execute(action);
         boolean success = (resultCode == 0);
         // if the build is successful then set it as success otherwise as a failure.

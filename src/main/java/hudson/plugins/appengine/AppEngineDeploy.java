@@ -1,8 +1,12 @@
 package hudson.plugins.appengine;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.model.Environment;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
@@ -30,13 +34,29 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
 
     @Override
     public boolean perform(AbstractBuild<?, ?> abstractBuild, Launcher launcher, BuildListener buildListener) throws InterruptedException, IOException {
+
         AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener);
-        appCfg.tryInitFromBuildWrapper(abstractBuild);
-        appCfg.setPath(path);
-        appCfg.setApplicationId(applicationId);
-        appCfg.setVersion(version);
+
+        AppEngineBuildWrapper.Environment wrapper = findEnvironment(abstractBuild);
+        appCfg.setCredentialsId(wrapper.getCredentialsId());
+        appCfg.setTool(wrapper.getAppCfg());
+
+        EnvVars env = abstractBuild.getEnvironment(buildListener);
+        appCfg.setPath(env.expand(path));
+        appCfg.setApplicationId(env.expand(applicationId));
+        appCfg.setVersion(env.expand(version));
         appCfg.execute(abstractBuild, "update");
         return true;
+    }
+
+    private AppEngineBuildWrapper.Environment findEnvironment(AbstractBuild build) {
+
+        for (Environment environment : build.getEnvironments()) {
+            if(environment instanceof AppEngineBuildWrapper.Environment) {
+                return (AppEngineBuildWrapper.Environment) environment;
+            }
+        }
+        throw new IllegalStateException("Cannot find AppEngine environment");
     }
 
     public String getApplicationId() {
