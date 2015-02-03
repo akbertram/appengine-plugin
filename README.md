@@ -6,13 +6,13 @@ as a build step or as workflow step.
 
 Development is at an early stage, with a focus on getting the core use case running, and has several notable gaps:
 
-[ ] Integration tests
-[ ] Support for python and go runtimes
-[ ] Implement proper auto installer for AppEngine SDKs. Currently the latest release URL is hardcoded
-[ ] Lookup credentials using the `applicationId` specified in appengine-web.xml if the `applicationId` is not 
-    explicitly set
-[ ] Execution of `set_default_version` directly via the API without the need for a workspace
-[ ] Plugin wiki page
+-  [ ] Integration tests
+-  [ ] Support for python and go runtimes
+-  [ ] Implement proper auto installer for AppEngine SDKs. Currently the latest release URL is hardcoded
+-  [ ] Lookup credentials using the `applicationId` specified in appengine-web.xml if the `applicationId` is not 
+       explicitly set
+-  [ ] Execution of `set_default_version` directly via the API without the need for a workspace
+-  [ ] Plugin wiki page
 
 ## Setup 
 
