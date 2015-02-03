@@ -71,7 +71,7 @@ a simple smoke test on the deployed application before making it the default ser
         git url: "https://github.com/GoogleCloudPlatform/appengine-guestbook-java.git"
     
         // build, run unit tests, and package
-        def mvnHome = tool 'M3'
+        def mvnHome = tool 'Maven 3.2.1'
         sh "${mvnHome}/bin/mvn -B clean install"
     
         // use our build number as the next version

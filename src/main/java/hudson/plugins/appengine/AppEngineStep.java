@@ -1,10 +1,7 @@
 package hudson.plugins.appengine;
 
 
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.FilePath;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.Node;
 import hudson.model.TaskListener;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
@@ -86,7 +83,10 @@ public class AppEngineStep extends AbstractStepImpl {
             appCfg.setApplicationId(step.applicationId);
             appCfg.setVersion(step.version);
             appCfg.setPath(step.path);
-            appCfg.execute(step.action);
+            int exitCode = appCfg.execute(step.action);
+            if(exitCode != 0) {
+                throw new AbortException(String.format("AppEngine %s failed with exit code %d", step.action, exitCode));
+            }
             return null;
         }
 
