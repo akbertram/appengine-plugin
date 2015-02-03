@@ -1,10 +1,9 @@
 package hudson.plugins.appengine;
 
-import com.cloudbees.plugins.credentials.Credentials;
-import com.cloudbees.plugins.credentials.CredentialsDescriptor;
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.repackaged.com.google.common.base.Strings;
 import com.google.common.base.Charsets;
 import com.google.jenkins.plugins.credentials.oauth.GoogleRobotCredentials;
 import hudson.AbortException;
@@ -13,9 +12,6 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.security.ACL;
-import hudson.slaves.NodeSpecific;
-import hudson.tools.ToolDescriptor;
-import hudson.tools.ToolInstallation;
 import hudson.util.ArgumentListBuilder;
 import net.sf.json.JSONObject;
 
@@ -179,13 +175,19 @@ public class AppCfg {
 
     public int execute(String action) throws IOException, InterruptedException {
 
-        if(appCfgPath == null) {
+        if(Strings.isNullOrEmpty(appCfgPath)) {
             setSDK(AppCfgInstallation.find(null));
+        }
+
+        if(Strings.isNullOrEmpty(appCfgPath)) {
+            throw new AbortException("AppEngine SDK path is not set");
         }
         
         if(credentials == null) {
             setCredentials(findCredentials(applicationId));
         }
+        
+
 
         ArgumentListBuilder args = new ArgumentListBuilder();
         args.add(appCfgPath);

@@ -16,18 +16,9 @@ import javax.inject.Inject;
 public class AppEngineStep extends AbstractStepImpl {
 
     private final String action;
-
-
-    @DataBoundSetter
     private String sdkName;
-
-    @DataBoundSetter
     private String applicationId;
-
-    @DataBoundSetter
     private String version;
-
-    @DataBoundSetter
     private String path;
     
 
@@ -36,6 +27,45 @@ public class AppEngineStep extends AbstractStepImpl {
         this.action = action;
     }
 
+    public String getAction() {
+        return action;
+    }
+
+    public String getSdkName() {
+        return sdkName;
+    }
+
+    @DataBoundSetter
+    public void setSdkName(String sdkName) {
+        this.sdkName = sdkName;
+    }
+
+    public String getApplicationId() {
+        return applicationId;
+    }
+
+    @DataBoundSetter
+    public void setApplicationId(String applicationId) {
+        this.applicationId = applicationId;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    @DataBoundSetter
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    @DataBoundSetter
+    public void setPath(String path) {
+        this.path = path;
+    }
 
     @Extension
     public static final class DescriptorImpl extends AbstractStepDescriptorImpl {

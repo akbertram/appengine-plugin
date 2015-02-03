@@ -68,10 +68,10 @@ a simple smoke test on the deployed application before making it the default ser
     
     node {
         // checkout the repo locally
-        git url: "https://github.com/GoogleCloudPlatform/appengine-guestbook-java.git"
+        git url: "https://github.com/akbertram/appengine-guestbook-java.git"
     
         // build, run unit tests, and package
-        def mvnHome = tool 'Maven 3.2.1'
+        def mvnHome = tool 'M3'
         sh "${mvnHome}/bin/mvn -B clean install"
     
         // use our build number as the next version
@@ -87,8 +87,9 @@ a simple smoke test on the deployed application before making it the default ser
     
         // Test the new version before making live
         // (poor man's integration test - ideally use web driver!)
-        sh "curl ${testUrl} | grep Hello"
+        sh "curl -s ${stagingUrl} | grep Hello"
     
+        // Once the tests pass, go live!
         appengine action: "set_default_version", applicationId: appId, version: newVersion
     
     }

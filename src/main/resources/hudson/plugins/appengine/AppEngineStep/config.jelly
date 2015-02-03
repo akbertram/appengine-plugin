@@ -1,0 +1,18 @@
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+  <f:entry title="Action" field="action">
+          <f:textbox/>
+  </f:entry>
+  <f:entry title="Path to Maven Module or Exploded WAR" field="path">
+          <f:textbox/>
+  </f:entry>
+  <f:entry title="Override application ID" field="applicationId">
+        <f:textbox/>
+  </f:entry>
+  <f:entry title="Override application Version" field="version">
+          <f:textbox/>
+  </f:entry>
+  <f:entry title="AppEngine SDK Name" field="sdkName">
+          <f:textbox/>
+  </f:entry>
+
+</j:jelly>
