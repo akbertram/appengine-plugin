@@ -29,7 +29,7 @@ public class AppCfg {
 
 
     public enum Action {
-        UPDATE;
+        UPDATE
     }
     
     public static final String APPCFG_USER = "jenkins";
@@ -86,6 +86,10 @@ public class AppCfg {
     public void setCredentialsId(String id) throws AbortException {
 
         GoogleRobotCredentials robotCredentials = GoogleRobotCredentials.getById(id);
+        setCredentials(robotCredentials);
+    }
+
+    private void setCredentials(GoogleRobotCredentials robotCredentials) throws AbortException {
         Credential credentials;
         try {
             credentials = robotCredentials.getGoogleCredential(new DeploymentScopeRequirement());
@@ -99,10 +103,10 @@ public class AppCfg {
         if(credentials.getAccessToken() == null) {
             throw new AbortException("Failed to acquire access token for deployment");
         }
-        
+
         this.credentials = toJson(credentials);
     }
-    
+
     private GoogleRobotCredentials findCredentials(String applicationId) throws AbortException {
         List<GoogleRobotCredentials> credentials = CredentialsProvider
                 .lookupCredentials(GoogleRobotCredentials.class, (Item) null,
@@ -168,11 +172,19 @@ public class AppCfg {
             throw new AbortException(appEngineXml + " does not exist");
         }
     }
-
+    
     public int execute(Action action) throws IOException, InterruptedException {
+        return execute(action.name().toLowerCase());
+    }
+
+    public int execute(String action) throws IOException, InterruptedException {
 
         if(appCfgPath == null) {
-            throw new AbortException("AppEngine SDK Tool has not be configured");
+            setSDK(AppCfgInstallation.find(null));
+        }
+        
+        if(credentials == null) {
+            setCredentials(findCredentials(applicationId));
         }
 
         ArgumentListBuilder args = new ArgumentListBuilder();

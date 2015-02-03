@@ -23,8 +23,6 @@ import java.util.Map;
 @RequiresDomain(DeploymentScopeRequirement.class)
 public class AppEngineBuildWrapper extends BuildWrapper {
 
-    public static final String GAE_SDK = "GAE_SDK";
-    
     private String sdkName;
     private String credentialsId;
     
@@ -49,14 +47,7 @@ public class AppEngineBuildWrapper extends BuildWrapper {
         public String getCredentialsId() {
             return credentialsId;
         }
-    
-    
-        public AppCfg createAppCfg(FilePath workspace, TaskListener listener, Launcher launcher) throws IOException, InterruptedException {
-            
-            return new AppCfg(workspace, launcher, listener)
-                    .setSDK(getAppCfg())
-                    ,setCredentialsId(credentialsId);
-        }
+        
     
     }
 
@@ -148,6 +139,4 @@ public class AppEngineBuildWrapper extends BuildWrapper {
             save();
         }
     }
-
-
 } 

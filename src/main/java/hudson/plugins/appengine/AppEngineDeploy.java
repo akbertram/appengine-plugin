@@ -35,17 +35,20 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
     @Override
     public boolean perform(AbstractBuild<?, ?> abstractBuild, Launcher launcher, BuildListener buildListener) throws InterruptedException, IOException {
 
-        AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener);
+        EnvVars env = abstractBuild.getEnvironment(buildListener);
+
+        AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener, env);
 
         AppEngineBuildWrapper.Environment wrapper = findEnvironment(abstractBuild);
-        appCfg.setCredentialsId(wrapper.getCredentialsId());
-        appCfg.setTool(wrapper.getAppCfg());
+        if(wrapper != null) {
+            appCfg.setCredentialsId(wrapper.getCredentialsId());
+            appCfg.setSDK(wrapper.getAppCfg());
+        }
 
-        EnvVars env = abstractBuild.getEnvironment(buildListener);
         appCfg.setPath(env.expand(path));
         appCfg.setApplicationId(env.expand(applicationId));
         appCfg.setVersion(env.expand(version));
-        appCfg.execute(abstractBuild, "update");
+        appCfg.execute(abstractBuild, AppCfg.Action.UPDATE);
         return true;
     }
 
@@ -56,7 +59,7 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
                 return (AppEngineBuildWrapper.Environment) environment;
             }
         }
-        throw new IllegalStateException("Cannot find AppEngine environment");
+        return null;
     }
 
     public String getApplicationId() {

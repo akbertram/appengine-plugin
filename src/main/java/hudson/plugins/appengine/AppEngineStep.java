@@ -11,11 +11,15 @@ import org.jenkinsci.plugins.workflow.steps.AbstractStepDescriptorImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractStepImpl;
 import org.jenkinsci.plugins.workflow.steps.AbstractSynchronousStepExecution;
 import org.jenkinsci.plugins.workflow.steps.StepContextParameter;
+import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
 import javax.inject.Inject;
 
-public class AppEngineUpdateStep extends AbstractStepImpl {
+public class AppEngineStep extends AbstractStepImpl {
+
+    private final String action;
+
 
     @DataBoundSetter
     private String sdkName;
@@ -29,10 +33,10 @@ public class AppEngineUpdateStep extends AbstractStepImpl {
     @DataBoundSetter
     private String path;
     
-    @DataBoundSetter
-    private String action;
 
-    public AppEngineUpdateStep() {
+    @DataBoundConstructor
+    public AppEngineStep(String action) {
+        this.action = action;
     }
 
 
@@ -45,7 +49,7 @@ public class AppEngineUpdateStep extends AbstractStepImpl {
 
         @Override
         public String getFunctionName() {
-            return "updateAppEngine";
+            return "appengine";
         }
 
         @Override public String getDisplayName() {
@@ -57,7 +61,7 @@ public class AppEngineUpdateStep extends AbstractStepImpl {
     public static final class Execution extends AbstractSynchronousStepExecution<Void> {
 
         @Inject
-        private transient AppEngineUpdateStep step;
+        private transient AppEngineStep step;
 
         @StepContextParameter
         private transient FilePath workspace;
@@ -82,10 +86,9 @@ public class AppEngineUpdateStep extends AbstractStepImpl {
             appCfg.setApplicationId(step.applicationId);
             appCfg.setVersion(step.version);
             appCfg.setPath(step.path);
-            appCfg.execute(AppCfg.Action.valueOf(step.action.toUpperCase()));
+            appCfg.execute(step.action);
             return null;
         }
-        
 
         private static final long serialVersionUID = 1L;
 
