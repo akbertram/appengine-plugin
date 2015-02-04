@@ -180,7 +180,7 @@ public class AppCfg {
         }
 
         if(Strings.isNullOrEmpty(appCfgPath)) {
-            throw new AbortException("AppEngine SDK path is not set");
+            throw new AbortException("AppEngine SDK path is not set and no installations are available.");
         }
         
         if(credentials == null) {

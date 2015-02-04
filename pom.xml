@@ -92,10 +92,17 @@
 
     <distributionManagement>
         <repository>
-            <id>maven.jenkins-ci.org</id>
-            <url>http://maven.jenkins-ci.org:8081/content/repositories/releases/</url>
+            <id>bedatadriven-oss</id>
+            <name>bedatadriven Open-Source releases</name>
+            <url>http://nexus.bedatadriven.com/content/repositories/oss-releases</url>
         </repository>
+        <snapshotRepository>
+            <id>bedatadriven-oss</id>
+            <name>bedatadriven Open-Source snapshots</name>
+            <url>http://nexus.bedatadriven.com/content/repositories/oss-snapshots</url>
+        </snapshotRepository>
     </distributionManagement>
+    
 
 
     <pluginRepositories>
