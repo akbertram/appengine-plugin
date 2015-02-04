@@ -17,7 +17,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import java.io.IOException;
 
 public class AppEngineDeploy extends hudson.tasks.Builder {
-    
+
     private String applicationId;
     private String version;
     private String path;
@@ -40,28 +40,34 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
         EnvVars env = abstractBuild.getEnvironment(buildListener);
 
         AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener);
-        
+
 
         AppEngineBuildWrapper.Environment wrapper = findEnvironment(abstractBuild);
+        AppCfgInstallation tool;
         if(wrapper != null) {
-
-            AppCfgInstallation tool = wrapper.getAppCfg();
-            String appCfgPath = tool
-                    .forNode(abstractBuild.getBuiltOn(), buildListener)
-                    .forEnvironment(env)
-                    .getExecutable(launcher);
-
-            if (Strings.isNullOrEmpty(appCfgPath)) {
-                throw new AbortException("Couldn't obtain path to appcfg.sh from " + tool.getName());
-            }
-            
-            appCfg.setCredentialsId(wrapper.getCredentialsId());
-            appCfg.setAppCfgPath(appCfgPath);
+            tool = wrapper.getAppCfg();
+        } else {
+            tool = AppCfgInstallation.find(null);
         }
 
+        String appCfgPath = tool
+                .forNode(abstractBuild.getBuiltOn(), buildListener)
+                .forEnvironment(env)
+                .getExecutable(launcher);
+
+        if (Strings.isNullOrEmpty(appCfgPath)) {
+            throw new AbortException("Couldn't obtain path to appcfg.sh from " + tool.getName());
+        }
+
+        appCfg.setAppCfgPath(appCfgPath);
         appCfg.setPath(env.expand(path));
         appCfg.setApplicationId(env.expand(applicationId));
         appCfg.setVersion(env.expand(version));
+
+        if(wrapper != null) {
+            appCfg.setCredentialsId(wrapper.getCredentialsId());
+        }
+
         appCfg.execute(abstractBuild, AppCfg.Action.UPDATE);
         return true;
     }
