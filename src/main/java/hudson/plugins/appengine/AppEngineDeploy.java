@@ -1,5 +1,7 @@
 package hudson.plugins.appengine;
 
+import com.google.api.client.repackaged.com.google.common.base.Strings;
+import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
@@ -37,12 +39,24 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
 
         EnvVars env = abstractBuild.getEnvironment(buildListener);
 
-        AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener, env);
+        AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener);
+        
 
         AppEngineBuildWrapper.Environment wrapper = findEnvironment(abstractBuild);
         if(wrapper != null) {
+
+            AppCfgInstallation tool = wrapper.getAppCfg();
+            String appCfgPath = tool
+                    .forNode(abstractBuild.getBuiltOn(), buildListener)
+                    .forEnvironment(env)
+                    .getExecutable(launcher);
+
+            if (Strings.isNullOrEmpty(appCfgPath)) {
+                throw new AbortException("Couldn't obtain path to appcfg.sh from " + tool.getName());
+            }
+            
             appCfg.setCredentialsId(wrapper.getCredentialsId());
-            appCfg.setSDK(wrapper.getAppCfg());
+            appCfg.setAppCfgPath(appCfgPath);
         }
 
         appCfg.setPath(env.expand(path));

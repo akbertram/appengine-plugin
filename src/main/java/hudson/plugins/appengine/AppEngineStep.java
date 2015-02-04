@@ -1,6 +1,7 @@
 package hudson.plugins.appengine;
 
 
+import com.google.api.client.repackaged.com.google.common.base.Strings;
 import hudson.*;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -108,8 +109,18 @@ public class AppEngineStep extends AbstractStepImpl {
 
         @Override
         protected Void run() throws Exception {
-            AppCfg appCfg = new AppCfg(workspace, launcher, taskListener, env);
-            appCfg.setSDK(AppCfgInstallation.find(step.sdkName));
+
+            AppCfgInstallation tool = AppCfgInstallation.find(step.getSdkName())
+                    .forNode(node, taskListener)
+                    .forEnvironment(env);
+
+            String appCfgPath = tool.getExecutable(launcher);
+            if(Strings.isNullOrEmpty(appCfgPath)) {
+                throw new AbortException("Could not obtain path to appcfg.sh of " + tool.getName());
+            }
+            
+            AppCfg appCfg = new AppCfg(workspace, launcher, taskListener);
+            appCfg.setAppCfgPath(appCfgPath);
             appCfg.setApplicationId(step.applicationId);
             appCfg.setVersion(step.version);
             appCfg.setPath(step.path);

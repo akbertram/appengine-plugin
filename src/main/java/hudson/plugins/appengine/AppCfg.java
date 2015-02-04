@@ -31,7 +31,6 @@ public class AppCfg {
     public static final String APPCFG_USER = "jenkins";
     
     private final TaskListener listener;
-    private EnvVars env;
     private final FilePath workspace;
 
     
@@ -44,27 +43,15 @@ public class AppCfg {
     private final Launcher launcher;
     private String appCfgPath;
     
-    public AppCfg(FilePath workspace, Launcher launcher, TaskListener listener, EnvVars env) {
+    public AppCfg(FilePath workspace, Launcher launcher, TaskListener listener) {
         this.workspace = workspace;
         this.launcher = launcher;
         this.listener = listener;
-        this.env = env;
     }
 
     public void setAppCfgPath(String path) {
         this.appCfgPath = path;
     }
-
-    public AppCfg setSDK(AppCfgInstallation appCfg) throws IOException, InterruptedException {
-        AppCfgInstallation tool = appCfg
-                .forNode(Computer.currentComputer().getNode(), listener)
-                .forEnvironment(env);
-
-        appCfgPath = tool.getExecutable(launcher);
-        
-        return this;
-    }
-
 
     public void setVersion(String version) {
         this.version = version;
@@ -174,21 +161,16 @@ public class AppCfg {
     }
 
     public int execute(String action) throws IOException, InterruptedException {
+        
 
         if(Strings.isNullOrEmpty(appCfgPath)) {
-            setSDK(AppCfgInstallation.find(null));
-        }
-
-        if(Strings.isNullOrEmpty(appCfgPath)) {
-            throw new AbortException("AppEngine SDK path is not set and no installations are available.");
+            throw new AbortException("The path to appcfg.sh has not been set.");
         }
         
         if(credentials == null) {
             setCredentials(findCredentials(applicationId));
         }
         
-
-
         ArgumentListBuilder args = new ArgumentListBuilder();
         args.add(appCfgPath);
         
