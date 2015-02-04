@@ -18,6 +18,13 @@
         <appengine.sdk.version>1.9.17</appengine.sdk.version>
     </properties>
 
+    <scm>
+        <connection>scm:git:git@github.com:akbertram/appengine-plugin.git</connection>
+        <url>scm:git:git@github.com:akbertram/appengine-plugin.git</url>
+        <developerConnection>scm:git:git@github.com:akbertram/appengine-plugin.git</developerConnection>
+    </scm>
+
+
     <dependencies>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
