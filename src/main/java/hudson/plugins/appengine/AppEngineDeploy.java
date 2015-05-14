@@ -1,22 +1,19 @@
 package hudson.plugins.appengine;
 
-import com.google.api.client.repackaged.com.google.common.base.Strings;
-import hudson.AbortException;
 import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.BuildListener;
-import hudson.model.Environment;
 import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
+import java.util.Date;
 
-public class AppEngineDeploy extends hudson.tasks.Builder {
+public class AppEngineDeploy extends AbstractAppEngineTask {
 
     private String applicationId;
     private String version;
@@ -30,56 +27,45 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
     }
 
     @Override
-    public boolean prebuild(AbstractBuild<?, ?> abstractBuild, BuildListener buildListener) {
-        return true;
-    }
+    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
 
-    @Override
-    public boolean perform(AbstractBuild<?, ?> abstractBuild, Launcher launcher, BuildListener buildListener) throws InterruptedException, IOException {
+        AppCfg appCfg = createAppCfg(build, launcher, listener);
+        EnvVars env = build.getEnvironment(listener);
 
-        EnvVars env = abstractBuild.getEnvironment(buildListener);
-
-        AppCfg appCfg = new AppCfg(abstractBuild.getWorkspace(), launcher, buildListener);
-
-
-        AppEngineBuildWrapper.Environment wrapper = findEnvironment(abstractBuild);
-        AppCfgInstallation tool;
-        if(wrapper != null) {
-            tool = wrapper.getAppCfg();
-        } else {
-            tool = AppCfgInstallation.find(null);
-        }
-
-        String appCfgPath = tool
-                .forNode(abstractBuild.getBuiltOn(), buildListener)
-                .forEnvironment(env)
-                .getExecutable(launcher);
-
-        if (Strings.isNullOrEmpty(appCfgPath)) {
-            throw new AbortException("Couldn't obtain path to appcfg.sh from " + tool.getName());
-        }
-
-        appCfg.setAppCfgPath(appCfgPath);
         appCfg.setPath(env.expand(path));
         appCfg.setApplicationId(env.expand(applicationId));
         appCfg.setVersion(env.expand(version));
-
-        if(wrapper != null) {
-            appCfg.setCredentialsId(wrapper.getCredentialsId());
-        }
-
-        appCfg.execute(abstractBuild, AppCfg.Action.UPDATE);
+        appCfg.update();
+        
+        updateBadges(appCfg, build);
+        
         return true;
     }
 
-    private AppEngineBuildWrapper.Environment findEnvironment(AbstractBuild build) {
+    private void updateBadges(AppCfg appCfg, AbstractBuild<?, ?> abstractBuild) throws IOException {
+        
+        DeploymentBadge lastDeployment = new DeploymentBadge(
+                appCfg.getApplicationId(), 
+                appCfg.getVersion(), 
+                new Date());
 
-        for (Environment environment : build.getEnvironments()) {
-            if(environment instanceof AppEngineBuildWrapper.Environment) {
-                return (AppEngineBuildWrapper.Environment) environment;
+
+        for (AbstractBuild<?, ?> previousBuild : abstractBuild.getProject().getBuilds()) {
+            if(!previousBuild.getId().equals(abstractBuild.getId())) {
+                boolean dirty = false;
+                for (DeploymentBadge previousDeployment : previousBuild.getActions(DeploymentBadge.class)) {
+                    if(lastDeployment.overwrites(previousDeployment)) {
+                        previousBuild.getActions().remove(previousDeployment);
+                        dirty = true;
+                    }
+                }
+                if(dirty) {
+                    previousBuild.save();
+                }
             }
         }
-        return null;
+
+        abstractBuild.addAction(lastDeployment);
     }
 
     public String getApplicationId() {
@@ -92,11 +78,6 @@ public class AppEngineDeploy extends hudson.tasks.Builder {
 
     public String getPath() {
         return path;
-    }
-
-    @Override
-    public BuildStepMonitor getRequiredMonitorService() {
-        return BuildStepMonitor.NONE;
     }
 
     @Extension

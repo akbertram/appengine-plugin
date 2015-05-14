@@ -124,10 +124,8 @@ public class AppEngineStep extends AbstractStepImpl {
             appCfg.setApplicationId(step.applicationId);
             appCfg.setVersion(step.version);
             appCfg.setPath(step.path);
-            int exitCode = appCfg.execute(step.action);
-            if(exitCode != 0) {
-                throw new AbortException(String.format("AppEngine %s failed with exit code %d", step.action, exitCode));
-            }
+            appCfg.executeOrAbort(step.action);
+
             return null;
         }
 
